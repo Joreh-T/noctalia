@@ -45,7 +45,7 @@ run m=mode: (build m)
     ./build-{{m}}/noctalia
 
 # Build and run the unit tests, enabling their targets when auto mode omits them.
-test m=mode *args: (_ensure-configured m)
+test m *args: (_ensure-configured m)
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ "{{m}}" == "release" || "{{m}}" == "asan" ]]; then
@@ -109,7 +109,7 @@ format-docs: _docs_formatter
 format-docs-check: _docs_formatter
     git ls-files -z '*.md' '*.mdx' ':!third_party' | xargs -0 -r node tools/remark/format.mjs --check
 
-_clang_tidy m=mode *args:
+_clang_tidy m *args:
     #!/usr/bin/env bash
     set -euo pipefail
     meson compile -C "build-{{m}}" generated-headers
