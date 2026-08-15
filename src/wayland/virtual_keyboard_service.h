@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+struct wl_display;
 struct wl_seat;
 struct zwp_virtual_keyboard_manager_v1;
 struct zwp_virtual_keyboard_v1;
@@ -22,7 +23,7 @@ public:
   VirtualKeyboardService(const VirtualKeyboardService&) = delete;
   VirtualKeyboardService& operator=(const VirtualKeyboardService&) = delete;
 
-  bool bind(zwp_virtual_keyboard_manager_v1* manager, wl_seat* seat);
+  bool bind(wl_display* display, zwp_virtual_keyboard_manager_v1* manager, wl_seat* seat);
   void cleanup();
 
   [[nodiscard]] bool isAvailable() const noexcept;
@@ -35,6 +36,7 @@ private:
   void sendKey(std::uint32_t key, bool pressed);
   void updateModifiers(bool ctrlPressed, bool shiftPressed);
 
+  wl_display* m_display = nullptr;
   zwp_virtual_keyboard_manager_v1* m_manager = nullptr;
   wl_seat* m_seat = nullptr;
   zwp_virtual_keyboard_v1* m_keyboard = nullptr;
