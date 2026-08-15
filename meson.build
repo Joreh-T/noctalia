@@ -88,7 +88,7 @@ polkit_gobject_dep  = dependency('polkit-gobject-1')
 # PipeWire/SPA headers use GCC extensions that trigger -Wpedantic/-Wconversion;
 # mark as system so the compiler suppresses those warnings.
 pipewire_dep        = dependency('libpipewire-0.3', include_type: 'system')
-wireplumber_dep     = dependency('wireplumber-0.5', include_type: 'system')
+wireplumber_dep     = dependency('wireplumber-0.4', include_type: 'system')
 curl_dep            = dependency('libcurl')
 libqalculate_dep    = dependency('libqalculate')
 libxml2_dep         = dependency('libxml-2.0')
@@ -188,7 +188,9 @@ mcu_dep = declare_dependency(
 )
 
 # ── System: stb_image_resize2 and stb_image_write (header-only) ─────────────────────────────────
-if not cc.has_header('stb/stb_image_resize2.h')
+# Ubuntu 24.04's libstb-dev does not ship stb_image_resize2.h; the vendored copy at the repo
+# root `stb/` (already on the include path via '.' below) supplies it.
+if not cc.has_header('stb/stb_image_resize2.h', include_directories: include_directories('.'))
   error('stb/stb_image_resize2.h not found')
 endif
 if not cc.has_header('stb/stb_image_write.h')

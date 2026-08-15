@@ -62,7 +62,7 @@ struct WirePlumberMixer::Impl {
     // pumps, so their completion callbacks never fire and the mixer silently never activates.
     g_main_context_push_thread_default(context);
 
-    core = wp_core_new(context, nullptr, nullptr);
+    core = wp_core_new(context, nullptr);
 
     if (wp_core_connect(core) == FALSE) {
       kLog.warn("could not connect to PipeWire; device volume control unavailable");
@@ -79,12 +79,12 @@ struct WirePlumberMixer::Impl {
 
     kLog.info("connected; loading mixer-api / default-nodes-api modules");
 
-    wp_core_load_component(
-        core, "libwireplumber-module-mixer-api", "module", nullptr, nullptr, cancellable, &Impl::onMixerLoaded, this
-    );
-    wp_core_load_component(
-        core, "libwireplumber-module-default-nodes-api", "module", nullptr, nullptr, cancellable,
-        &Impl::onDefaultNodesLoaded, this
+    // 0.4 loads components synchronously (no async wp_core_load_component / _finish); the loaded
+    // plugin's activation below stays async via wp_object_activate(), as in the 0.5 path.
+    loadComponent(this, "libwireplumber-module-mixer-api", "mixer-api", &mixer, &Impl::onMixerActivated);
+    loadComponent(
+        this, "libwireplumber-module-default-nodes-api", "default-nodes-api", &defaultNodes,
+        &Impl::onDefaultNodesActivated
     );
 
     // If neither module reports ready within a few seconds, device volume/mute is silently dead
@@ -132,22 +132,24 @@ struct WirePlumberMixer::Impl {
     return G_SOURCE_REMOVE;
   }
 
-  static void onMixerLoaded(GObject* /*source*/, GAsyncResult* res, gpointer data) noexcept {
-    auto* self = static_cast<Impl*>(data);
+  // wireplumber 0.4 loads components synchronously (wp_core_load_component takes a GError**, no
+  // cancellable / async callback), then hands off to the async wp_object_activate() for the plugin.
+  static void loadComponent(Impl* self, const gchar* component, const gchar* pluginName, WpPlugin** outPlugin,
+                            GAsyncReadyCallback onActivated) {
     GError* err = nullptr;
-    if (wp_core_load_component_finish(self->core, res, &err) == FALSE) {
-      kLog.warn("mixer-api load failed: {}", err != nullptr ? err->message : "unknown");
+    if (wp_core_load_component(self->core, component, "module", nullptr, &err) == FALSE) {
+      kLog.warn("{} load failed: {}", pluginName, err != nullptr ? err->message : "unknown");
       g_clear_error(&err);
       return;
     }
 
-    self->mixer = wp_plugin_find(self->core, "mixer-api");
-    if (self->mixer == nullptr) {
-      kLog.warn("mixer-api plugin not found after load");
+    *outPlugin = wp_plugin_find(self->core, pluginName);
+    if (*outPlugin == nullptr) {
+      kLog.warn("{} plugin not found after load", pluginName);
       return;
     }
 
-    wp_object_activate(WP_OBJECT(self->mixer), WP_PLUGIN_FEATURE_ENABLED, nullptr, &Impl::onMixerActivated, self);
+    wp_object_activate(WP_OBJECT(*outPlugin), WP_PLUGIN_FEATURE_ENABLED, nullptr, onActivated, self);
   }
 
   static void onMixerActivated(GObject* /*source*/, GAsyncResult* res, gpointer data) noexcept {
@@ -239,26 +241,6 @@ struct WirePlumberMixer::Impl {
       }
       g_value_unset(&val);
     }
-  }
-
-  static void onDefaultNodesLoaded(GObject* /*source*/, GAsyncResult* res, gpointer data) noexcept {
-    auto* self = static_cast<Impl*>(data);
-    GError* err = nullptr;
-    if (wp_core_load_component_finish(self->core, res, &err) == FALSE) {
-      kLog.warn("default-nodes-api load failed: {}", err != nullptr ? err->message : "unknown");
-      g_clear_error(&err);
-      return;
-    }
-
-    self->defaultNodes = wp_plugin_find(self->core, "default-nodes-api");
-    if (self->defaultNodes == nullptr) {
-      kLog.warn("default-nodes-api plugin not found after load");
-      return;
-    }
-
-    wp_object_activate(
-        WP_OBJECT(self->defaultNodes), WP_PLUGIN_FEATURE_ENABLED, nullptr, &Impl::onDefaultNodesActivated, self
-    );
   }
 
   static void onDefaultNodesActivated(GObject* /*source*/, GAsyncResult* res, gpointer data) noexcept {
