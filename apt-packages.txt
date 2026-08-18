@@ -1,13 +1,44 @@
-# Noctalia v5 build deps (Ubuntu 24.04)
-# Copy the package block (not these comment lines) after `sudo apt install `.
+# Noctalia v5 build deps (Ubuntu 24.04), one package per line.
+# Install: sudo apt install -y $(grep -v '^#' apt-packages.txt)
+# Manual-paste variant: apt-packages.paste.txt (keep both in sync).
 # g++-14 (not the default g++-13) is required for C++23 <print>; CC/CXX are
 # pinned in update.sh. sdbus-c++ v2 is NOT from apt — build v2.3.1 from source
 # into ~/noctalia-deps (UBUNTU_2404_NOCTALIA-MIGRATION.md §2.4); libsystemd-dev
 # supplies the sd-bus headers it and noctalia need.
-meson ninja-build pkg-config just g++-14 libwayland-dev wayland-protocols libegl-dev \
-libgles-dev libfreetype-dev libfontconfig-dev libcairo2-dev libpango1.0-dev \
-libharfbuzz-dev libxkbcommon-dev libglib2.0-dev libsecret-1-dev libsodium-dev \
-libsystemd-dev libpipewire-0.3-dev libwireplumber-0.4-dev libpam0g-dev \
-libpolkit-agent-1-dev libpolkit-gobject-1-dev libcurl4-openssl-dev libwebp-dev \
-libjxl-dev libsndfile1-dev librsvg2-dev libqalculate-dev libxml2-dev libmd4c-dev \
-libtomlplusplus-dev libical-dev nlohmann-json3-dev libstb-dev libjemalloc-dev
+meson
+ninja-build
+pkg-config
+just
+g++-14
+libwayland-dev
+wayland-protocols
+libegl-dev
+libgles-dev
+libfreetype-dev
+libfontconfig-dev
+libcairo2-dev
+libpango1.0-dev
+libharfbuzz-dev
+libxkbcommon-dev
+libglib2.0-dev
+libsecret-1-dev
+libsodium-dev
+libsystemd-dev
+libpipewire-0.3-dev
+libwireplumber-0.4-dev
+libpam0g-dev
+libpolkit-agent-1-dev
+libpolkit-gobject-1-dev
+libcurl4-openssl-dev
+libwebp-dev
+libjxl-dev
+libsndfile1-dev
+librsvg2-dev
+libqalculate-dev
+libxml2-dev
+libmd4c-dev
+libtomlplusplus-dev
+libical-dev
+nlohmann-json3-dev
+libstb-dev
+libjemalloc-dev
