@@ -87,7 +87,7 @@ cd ~/workspaces/window_mananger_ui/noctalia && ./update.sh
 完成后重启 noctalia(或注销重登)生效。
 
 注意:
-- 全新机器: 构建依赖见 `apt-packages.txt`(复制包名块到 `sudo apt install` 之后);注意 sdbus-c++ v2 **不在** apt 清单内,需按 §二.4 源码构建到 `~/noctalia-deps`。
+- 全新机器: 构建依赖见 `apt-packages.txt`(一行一个包),一键安装 `sudo apt install -y $(grep -v '^#' apt-packages.txt)`;手工粘贴版在 `apt-packages.paste.txt`(两份保持同步)。注意 sdbus-c++ v2 **不在** apt 清单内,需按 §二.4 源码构建到 `~/noctalia-deps`。
 - Ubuntu 24.04 不会升级 wireplumber-0.5 / libwayland-1.23,这些补丁**长期需要**,每次 rebase 都要带着。
 - rebase 冲突高发区: `src/pipewire/wireplumber_mixer.cpp`(0.5→0.4 API)、`src/wayland/virtual_keyboard_service.*`(避开 `wl_proxy_get_display`)。
 - 旧的 `build-release/` 记录的是搬家前的路径(`~/src/noctalia`),已被脚本删除重建,无需保留。
