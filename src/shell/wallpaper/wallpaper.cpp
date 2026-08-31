@@ -1205,6 +1205,21 @@ Wallpaper::SwitchOutcome Wallpaper::switchWallpaperTo(PickWallpaper action, std:
             m_config->setWallpaperPath(inst->connectorName, picked);
           }
         }
+        // Ubuntu-24.04 local patch: also refresh remembered-but-currently-
+        // disconnected monitors. Upstream leaves their per-monitor records
+        // stale, so a global rotation while a monitor is unplugged freezes
+        // its record at an old wallpaper and the next hotplug shows a
+        // different image than the monitors that kept rotating.
+        // (Iterate a copy: setWallpaperPath may mutate the map.)
+        std::vector<std::string> remembered;
+        remembered.reserve(m_config->monitorWallpaperPaths().size());
+        for (const auto& [connector, record] : m_config->monitorWallpaperPaths()) {
+          (void)record;
+          remembered.push_back(connector);
+        }
+        for (const auto& connector : remembered) {
+          m_config->setWallpaperPath(connector, picked);
+        }
         m_config->setWallpaperPath(std::nullopt, picked);
         kLog.info("ipc set all outputs → {}", picked);
         anyChanged = true;
