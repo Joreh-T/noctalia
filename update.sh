@@ -4,7 +4,8 @@
 # The ubuntu-24.04 branch carries local compatibility patches (wireplumber 0.4,
 # libwayland 1.22, vendored stb). This script rebases them onto upstream/main
 # (noctalia-dev/noctalia), rebuilds with the isolated sdbus-c++ v2 prefix
-# (~/noctalia-deps) and g++-14, installs to ~/.local/bin, and — only after a
+# (~/workspaces/window_mananger_ui/noctalia-deps) and g++-14, installs to
+# ~/.local/bin, and — only after a
 # successful build — pushes the branch to the fork (origin, Joreh-T/noctalia)
 # as backup.
 #
@@ -12,7 +13,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-DEPS="$HOME/noctalia-deps"
+DEPS="$HOME/workspaces/window_mananger_ui/noctalia-deps"
 BUILD=build-release
 
 command -v g++-14 >/dev/null || { echo "missing g++-14 (apt install g++-14)" >&2; exit 1; }
