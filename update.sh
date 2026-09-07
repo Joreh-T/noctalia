@@ -19,6 +19,15 @@ BUILD=build-release
 command -v g++-14 >/dev/null || { echo "missing g++-14 (apt install g++-14)" >&2; exit 1; }
 [ -d "$DEPS/lib/pkgconfig" ] || { echo "missing $DEPS (sdbus-c++ v2 prefix)" >&2; exit 1; }
 
+# The .pc files bake absolute paths at build time; if the prefix was relocated
+# (it lives under ~/workspaces/window_mananger_ui/ now), a stale path silently
+# falls back to the system sdbus-c++ v1 headers and the build explodes with
+# 'ServiceName does not name a type' / 'PollData has no member eventFd'.
+if ! PKG_CONFIG_PATH="$DEPS/lib/pkgconfig" pkg-config --cflags sdbus-c++ | grep -q -- "$DEPS"; then
+    echo "sdbus-c++.pc does not resolve into $DEPS (relocated prefix? fix baked paths in lib/pkgconfig/*.pc)" >&2
+    exit 1
+fi
+
 echo "==> Fetching upstream..."
 git fetch upstream
 
@@ -37,8 +46,10 @@ CC=gcc-14 CXX=g++-14 meson setup "$BUILD" \
     --pkg-config-path="$DEPS/lib/pkgconfig" \
     -Dcpp_link_args="-Wl,-rpath,$DEPS/lib"
 
-echo "==> Compiling..."
-meson compile -C "$BUILD"
+echo "==> Compiling (ninja -j${NINJA_JOBS:-4})..."
+# Cap parallel jobs: 16 concurrent g++ -O3 jobs exhaust 14 GB RAM and
+# systemd-oomd kills cc1plus ("Terminated signal terminated program").
+meson compile -C "$BUILD" --jobs "${NINJA_JOBS:-4}"
 
 echo "==> Installing to ~/.local/bin..."
 meson install --no-rebuild -C "$BUILD"
