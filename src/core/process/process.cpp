@@ -243,6 +243,11 @@ namespace {
     return flags >= 0 && ::fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0;
   }
 
+  bool setFdCloexec(int fd) {
+    const int flags = ::fcntl(fd, F_GETFD);
+    return flags >= 0 && ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == 0;
+  }
+
   void emitOutputCallback(const process::OutputCallback* callback, const char* data, std::size_t len) {
     if (callback == nullptr || !*callback || len == 0) {
       return;
@@ -387,6 +392,16 @@ namespace {
       return {-1, {}, {}};
     }
 
+    // Cross-thread fork leak: between pipe() and the parent's post-fork close,
+    // these write-ends live in this process without CLOEXEC, so a concurrent
+    // fork from another thread (plugin git sync, a runStream worker) inherits
+    // them; a long-lived inheritor (e.g. `udisksctl monitor`) then delays EOF
+    // for its whole lifetime and the draining thread stalls. CLOEXEC is safe
+    // here: the child dup2()s these onto stdio (dup2 clears the flag on the
+    // new descriptor) and closes the originals.
+    (void)setFdCloexec(outPipe[1]);
+    (void)setFdCloexec(errPipe[1]);
+
     const pid_t pid = ::fork();
     if (pid < 0) {
       closePipe(outPipe);
@@ -525,6 +540,19 @@ namespace {
     if (needPid && ::pipe(reportPipe) != 0) {
       closePipe(execStatusPipe);
       return false;
+    }
+
+    // Cross-thread fork leak: between pipe() and the parent's post-fork close,
+    // these write-ends live in this process without CLOEXEC, so a concurrent
+    // fork from another thread (plugin git sync, a runStream worker) inherits
+    // them; a long-lived inheritor (e.g. `udisksctl monitor`) then keeps the
+    // exec handshake open forever and this thread blocks in read() waiting for
+    // an EOF that never arrives -- the whole shell froze at startup this way
+    // (2026-09-28). The protocol is unchanged: the grandchild writes exec
+    // failures before exec, and CLOEXEC only takes effect at exec.
+    (void)setFdCloexec(execStatusPipe[1]);
+    if (needPid) {
+      (void)setFdCloexec(reportPipe[1]);
     }
 
     const pid_t intermediate = ::fork();
