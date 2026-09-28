@@ -101,7 +101,7 @@ struct WirePlumberMixer::Impl {
 
     disconnectPending = false;
     cancellable = g_cancellable_new();
-    core = wp_core_new(context, nullptr, nullptr);
+    core = wp_core_new(context, nullptr);
     if (core == nullptr) {
       return false;
     }
