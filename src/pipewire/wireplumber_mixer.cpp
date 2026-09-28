@@ -102,8 +102,10 @@ struct WirePlumberMixer::Impl {
 
     disconnectPending = false;
     cancellable = g_cancellable_new();
+    // WirePlumber 0.4 (Ubuntu 24.04): wp_core_new(GMainContext*, WpProperties*).
+    // Properties mirror upstream 0.5: keep the realtime module out of this connection.
     core = wp_core_new(
-        context, nullptr,
+        context,
         wp_properties_new(
             noctalia::pipewire::kContextRtModuleKey, noctalia::pipewire::kContextRtModuleDisabled, nullptr
         )
