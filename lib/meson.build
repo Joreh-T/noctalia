@@ -222,7 +222,10 @@ endif
 
 # '.' adds both lib/ and its build directory, where the protocol headers above
 # are generated.
-_noctalia_ui_inc = include_directories('.')
+# '..' is the project root, where the Ubuntu 24.04 port vendors stb/ (system
+# libstb-dev lacks stb_image_resize2.h); image_resize.cpp includes
+# <stb/stb_image_resize2.h> from this target.
+_noctalia_ui_inc = include_directories('.', '..')
 
 noctalia_ui_lib = static_library('noctalia-ui',
   sources: _noctalia_ui_sources + _noctalia_ui_protocol_sources + noctalia_ui_protocol_headers,
