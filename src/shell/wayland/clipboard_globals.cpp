@@ -100,5 +100,6 @@ void ClipboardGlobals::bindVirtualKeyboardService() {
   if (m_virtualKeyboardService == nullptr || m_virtualKeyboardManager == nullptr || seat == nullptr) {
     return;
   }
+  m_virtualKeyboardService->setDisplay(m_connection.display());
   m_virtualKeyboardService->bind(m_virtualKeyboardManager, seat);
 }

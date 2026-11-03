@@ -37,6 +37,8 @@ VirtualKeyboardService::VirtualKeyboardService() = default;
 
 VirtualKeyboardService::~VirtualKeyboardService() { cleanup(); }
 
+void VirtualKeyboardService::setDisplay(wl_display* display) noexcept { m_display = display; }
+
 bool VirtualKeyboardService::bind(zwp_virtual_keyboard_manager_v1* manager, wl_seat* seat) {
   if (manager == nullptr || seat == nullptr) {
     cleanup();
@@ -92,9 +94,10 @@ bool VirtualKeyboardService::sendPasteShortcut(VirtualPasteShortcut shortcut) {
     break;
   }
 
-  auto* display = wl_proxy_get_display(reinterpret_cast<wl_proxy*>(m_keyboard));
-  if (display != nullptr) {
-    wl_display_flush(display);
+  // wl_proxy_get_display() is unavailable on Ubuntu 24.04's libwayland 1.22
+  // (added upstream later); flush via the connection-supplied display instead.
+  if (m_display != nullptr) {
+    (void)wl_display_flush(m_display);
   }
   return true;
 }
