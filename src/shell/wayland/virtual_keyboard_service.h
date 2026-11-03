@@ -3,6 +3,7 @@
 #include <cstdint>
 
 struct wl_seat;
+struct wl_display;
 struct zwp_virtual_keyboard_manager_v1;
 struct zwp_virtual_keyboard_v1;
 struct xkb_context;
@@ -23,6 +24,9 @@ public:
   VirtualKeyboardService& operator=(const VirtualKeyboardService&) = delete;
 
   bool bind(zwp_virtual_keyboard_manager_v1* manager, wl_seat* seat);
+  // Ubuntu 24.04's libwayland 1.22 lacks wl_proxy_get_display(); the owning
+  // WaylandConnection supplies its wl_display* so sendPasteShortcut can flush.
+  void setDisplay(wl_display* display) noexcept;
   void cleanup();
 
   bool isAvailable() const noexcept;
@@ -33,6 +37,8 @@ private:
   [[nodiscard]] bool ensureKeymap();
   void pressChord(std::uint32_t key, bool ctrlPressed, bool shiftPressed);
   void sendKey(std::uint32_t key, bool pressed);
+
+  wl_display* m_display = nullptr;
   void updateModifiers(bool ctrlPressed, bool shiftPressed);
 
   zwp_virtual_keyboard_manager_v1* m_manager = nullptr;
