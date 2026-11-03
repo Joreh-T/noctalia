@@ -174,7 +174,10 @@ endif
 
 # '.' adds both lib/ and its build directory, where the protocol headers above
 # are generated.
-_noctalia_ui_inc = include_directories('.')
+# '..' is the project root, where the Ubuntu 24.04 port vendors stb/ (system
+# libstb-dev lacks stb_image_resize2.h); image_resize.cpp includes
+# <stb/stb_image_resize2.h> from this target.
+_noctalia_ui_inc = include_directories('.', '..')
 
 _noctalia_ui_system_dependencies = [
   wayland_client_dep,
