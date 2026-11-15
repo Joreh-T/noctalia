@@ -39,7 +39,7 @@ if not _noctalia_ui_gles2_dep.found()
   _noctalia_ui_gles2_dep = dependency('epoxy')
 endif
 
-if not _noctalia_ui_cc.has_header('stb/stb_image_resize2.h')
+if not _noctalia_ui_cc.has_header('stb/stb_image_resize2.h', include_directories: include_directories('..'))
   error('noctalia-ui: stb/stb_image_resize2.h not found')
 endif
 
